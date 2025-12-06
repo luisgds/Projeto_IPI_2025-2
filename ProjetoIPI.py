@@ -17,6 +17,8 @@ while True:
 cap.release()
 cv2.destroyAllWindows()
 
+# Talvez não seja necessario desordenar e reordenar
+# pois esse processo é apenas para a transmissão
 # Reordenar os quadros igual na 
 def reorder_frames(frames, REF):
     F = len(frames)
@@ -60,17 +62,13 @@ cap.release()
 
 print(f"Total de frames lidos: {len(frames)}")
 
-# ---------------------------------------------
 # 2. APLICAR A DESORDENAÇÃO
-# ---------------------------------------------
 
-REF = 3
-reordered = reorder_frames(frames, REF)
+#REF = 3
+#reordered = reorder_frames(frames, REF)
 
-# ---------------------------------------------
 # 3. SALVAR O VÍDEO RESULTANTE
-# ---------------------------------------------
-
+"""
 output_path = "video_desordenado.mp4"
 fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 writer = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
@@ -81,3 +79,26 @@ for frame in reordered:
 writer.release()
 
 print("Vídeo salvo como:", output_path)
+"""
+
+# Reduzir os quadro em 1/16
+
+output_path = "video_16x_menor.mp4"
+cap = cv2.VideoCapture(input_path)
+fps = cap.get(cv2.CAP_PROP_FPS)
+width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+new_width = width // 4
+new_height = height // 4
+fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+writer = cv2.VideoWriter(output_path, fourcc, fps, (new_width, new_height))
+
+while True:
+    ret, frame = cap.read()
+    if not ret:
+        break
+    resized = cv2.resize(frame, (new_width, new_height), interpolation=cv2.INTER_AREA)
+    writer.write(resized)
+
+cap.release()
+writer.release()
