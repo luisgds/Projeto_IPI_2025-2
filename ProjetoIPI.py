@@ -1,7 +1,7 @@
 import cv2
 from reordenar import *
 from reduzirframe import reduzirframe, aumentarframe
-from calcularlimiares import calcula_limiares_video
+from calcularlimiares import *
 # ---------------------------------------------
 # 1. LER O VÍDEO
 # ---------------------------------------------
@@ -32,7 +32,7 @@ def ler_frames(input_path):
 
 input_path = "akiyo_cif.y4m"
 output_path = "video_16x_menor.y4m"
-reduzirframe(input_path, output_path)
+frames_reduzidos = reduzirframe(input_path, output_path)
 
 #Aumentar os frames do video reduzio 
 frame_reduzido = "video_16x_menor.y4m"
@@ -46,9 +46,12 @@ frames_aumento = ler_frames(video_menor)
 limiares_principal = calcula_limiares_video(frames_orig)
 # introduzir erros ao video original
 # reduzir ele para comparar com o preview
-#limiares_previa = calcula_limiares_preview(frames_preview, frames_reduzidos)
+frames_corrompidos = corromper_frames(frames_orig)
+#frame_corr_reduz = reduzirframe(input_path, output_path)
+#limiares_previa = calcula_limiares_com_corrompido(frames_corrompidos, frame_corr_reduz)
 
 print("Vetor de limiares principal:")
 print(limiares_principal)
 print("Vetor de limiares previo:")
+
 #print(limiares_previa)
