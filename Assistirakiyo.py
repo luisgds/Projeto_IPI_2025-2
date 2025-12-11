@@ -2,7 +2,9 @@ import cv2
 # Ver o video
 cap = cv2.VideoCapture("akiyo_cif.y4m")
 #cap = cv2.VideoCapture("video_16x_menor.y4m")
-cap = cv2.VideoCapture("video_aumentado.y4m")
+#cap = cv2.VideoCapture("video_aumentado.y4m")
+#cap = cv2.VideoCapture("video_corrompido.y4m")
+#cap = cv2.VideoCapture("reduzido_e_corrompido.y4m")
 
 fps = 30
 delay = int(1000 / fps)

@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
+
 def reduzirframe(input_path, output_path):
+    # Salva arquivo reduzido
     cap = cv2.VideoCapture(input_path)
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -16,14 +18,12 @@ def reduzirframe(input_path, output_path):
                 break
 
             resized = cv2.resize(frame, (new_width, new_height), interpolation=cv2.INTER_AREA)
-            frames_reduzidos.append(resized.copy())
             yuv = cv2.cvtColor(resized, cv2.COLOR_BGR2YUV_I420)
             out.write(b"FRAME\n")
             out.write(yuv.tobytes())
     cap.release()
     print("Arquivo salvo como:", output_path)
-    return frames_reduzidos
-
+    
 
 def aumentarframe(input_path, output_path):
     with open(input_path, "rb") as f:

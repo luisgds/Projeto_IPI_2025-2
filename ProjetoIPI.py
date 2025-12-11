@@ -1,28 +1,9 @@
 import cv2
 from reordenar import *
-from reduzirframe import reduzirframe, aumentarframe
+from reduzirframe import *
 from calcularlimiares import *
-# ---------------------------------------------
-# 1. LER O VÍDEO
-# ---------------------------------------------
+import numpy as np
 
-def ler_frames(input_path):
-    cap = cv2.VideoCapture(input_path)
-    frames = []
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-        frames.append(frame)
-
-    cap.release()
-
-    print(f"Total de frames lidos: {len(frames)}")
-    return frames
 # 2. APLICAR A DESORDENAÇÃO
 # Caso seja necessario 
 #REF = 3
@@ -32,26 +13,39 @@ def ler_frames(input_path):
 
 input_path = "akiyo_cif.y4m"
 output_path = "video_16x_menor.y4m"
-frames_reduzidos = reduzirframe(input_path, output_path)
+reduzirframe(input_path, output_path) # Salvar arquivo reduzido
 
-#Aumentar os frames do video reduzio 
+#Aumentar os frames do video reduzido 
 frame_reduzido = "video_16x_menor.y4m"
 output_path = "video_aumentado.y4m"
-aumentarframe(frame_reduzido, output_path)
+aumentarframe(frame_reduzido, output_path) # sempre salva o arquivo
 
 video_original = input_path
 video_menor = "video_16x_menor.y4m"
-frames_orig = ler_frames(video_original)
-frames_aumento = ler_frames(video_menor)
-limiares_principal = calcula_limiares_video(frames_orig)
+limiares_principal = calcula_limiares_vetor(video_original)
+# Normalmente as bibliotecas que fazem isso acaba introduzindo
+# erros fazendo com que haja muito pequenos erros, porém aqui será tudo zero
+limiares_preview = calcula_limiares_vetor(video_menor, "video_16x_menor.y4m", False)
+#print("Vetor de limiares principal:")
+#print(limiares_principal)
+#print("Vetor de limiares previo (capaz de ser ajustado se quiser):")
+#print(limiares_preview)
+
 # introduzir erros ao video original
-# reduzir ele para comparar com o preview
-frames_corrompidos = corromper_frames(frames_orig)
-#frame_corr_reduz = reduzirframe(input_path, output_path)
-#limiares_previa = calcula_limiares_com_corrompido(frames_corrompidos, frame_corr_reduz)
+corromper_y4m(video_original, "video_corrompido.y4m")
+# introduzir erros pequenos ao video preview
+corromper_y4m(video_menor, "preview_corrompido.y4m")
 
-print("Vetor de limiares principal:")
-print(limiares_principal)
-print("Vetor de limiares previo:")
+reduzirframe("video_corrompido.y4m", "reduzido_e_corrompido.y4m")
+erros = detectar_erros_video("reduzido_e_corrompido.y4m",
+                             "preview_corrompido.y4m",  
+                             limiares_preview)
+print(erros)
+#limiares = np.array(limiares_principal, dtype=np.float32)
+#limiares_preview = np.array(limiares_previa, dtype=np.float32)
 
-#print(limiares_previa)
+#erro = (limiares_preview > limiares).astype(int)
+#print(erro)
+
+
+
