@@ -46,7 +46,7 @@ def calcula_limiar(frame1, frame2, blocos = 16):
 def calcula_limiares_vetor(orig_path, redu_path = None, mode = True):
     if mode: 
         frames = ler_frames(orig_path)
-        limiares = [0,0]
+        limiares = [0]
         for i in range(1, len(frames)):
             # Converte frame BGR -> YUV
             yuv1 = cv2.cvtColor(frames[i-1], cv2.COLOR_BGR2YUV) 
@@ -60,7 +60,7 @@ def calcula_limiares_vetor(orig_path, redu_path = None, mode = True):
     else:
         frames_orig = ler_frames(orig_path)
         frames_corr = ler_frames(redu_path)
-        limiares = [0]
+        limiares = []
         n = min(len(frames_orig), len(frames_corr))
         for i in range(n):
             yuv1 = cv2.cvtColor(frames_orig[i], cv2.COLOR_BGR2YUV)
@@ -81,7 +81,7 @@ def detectar_erros_frame(frame_preview, frame_recon, limiar, block_size=16):
 
     # Redimensiona blocos reconstruídos para bater com os do preview
     erros = 0
-
+    loc_erros = []
     for bp, br in zip(blocks_p, blocks_r):
         if bp.shape != br.shape:
             br = cv2.resize(br, (bp.shape[1], bp.shape[0]))
@@ -90,20 +90,37 @@ def detectar_erros_frame(frame_preview, frame_recon, limiar, block_size=16):
 
         if mse_atual > limiar:
             erros += 1
+            loc_erros.append(1)
+        else:
+            loc_erros.append(0)
 
-    return erros > 0   # True = frame tem erro
+    return erros > 0 , loc_erros
 
-def detectar_erros_video(path_preview, path_recon, limiares):
+def detectar_erros_preview(path_preview, path_recon, limiares):
     frames_prev = ler_frames(path_preview)
     frames_recon = ler_frames(path_recon)
     erros_frames = []
+    loc_erros_frames = []
+
 
     for i in range(len(frames_prev)):
-        erro = detectar_erros_frame(frames_prev[i], frames_recon[i], limiares[i])
+        erro, loc_erros = detectar_erros_frame(frames_prev[i], frames_recon[i], limiares[i])
         erros_frames.append(erro)
+        loc_erros_frames.append(loc_erros)
 
-    return erros_frames
+    return erros_frames, loc_erros_frames
 
+def detectar_erros_principal(path_preview, limiares):
+    frames_prev = ler_frames(path_preview)
+    erros_frames = []
+    loc_erros_frames = []
+    for i in range(len(frames_prev)):
+        erro, loc_erros = detectar_erros_frame(frames_prev[i], frames_prev[i-1], limiares[i])
+        erros_frames.append(erro)
+        loc_erros_frames.append(loc_erros)
+
+
+    return erros_frames, loc_erros_frames
 
 def corromper_y4m(input_path, output_path, bits_por_frame=10000):
     with open(input_path, "rb") as f:
