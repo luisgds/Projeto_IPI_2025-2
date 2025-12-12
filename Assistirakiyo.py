@@ -3,7 +3,7 @@ import cv2
 cap = cv2.VideoCapture("akiyo_cif.y4m")
 #cap = cv2.VideoCapture("video_16x_menor.y4m")
 #cap = cv2.VideoCapture("video_aumentado.y4m")
-#cap = cv2.VideoCapture("video_corrompido.y4m")
+cap = cv2.VideoCapture("video_corrompido_2.y4m")
 #cap = cv2.VideoCapture("reduzido_e_corrompido.y4m")
 #cap = cv2.VideoCapture("preview_corrompido.y4m")
 cap = cv2.VideoCapture("video_corrigido.y4m")
@@ -22,3 +22,4 @@ while True:
 
 cap.release()
 cv2.destroyAllWindows()
+

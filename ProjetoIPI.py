@@ -35,16 +35,17 @@ limiares_preview = calcula_limiares_vetor(video_menor, "video_16x_menor.y4m", Fa
 #print(limiares_preview)
 
 # introduzir erros ao video original
-corromper_y4m(video_original, "video_corrompido.y4m")
+#corromper_y4m(video_original, "video_corrompido.y4m")
+corromper_y4m_2(video_original, "video_corrompido_2.y4m")
 # introduzir erros pequenos ao video preview
 corromper_y4m(video_menor, "preview_corrompido.y4m")
 
-reduzirframe("video_corrompido.y4m", "reduzido_e_corrompido.y4m")
+reduzirframe("video_corrompido_2.y4m", "reduzido_e_corrompido.y4m")
 erros_preview, loc_erros_preview = detectar_erros_preview("reduzido_e_corrompido.y4m",
                              "preview_corrompido.y4m",  
                              limiares_preview)
 erros_principal, loc_erros_principal = detectar_erros_principal(
-    "video_corrompido.y4m", 
+    "video_corrompido_2.y4m", 
     limiares_principal)
 #print(erros_preview)
 #print(erros_principal)
@@ -77,7 +78,7 @@ erros_preview_global, loc_preview_global = detectar_erros_preview(
 )
 
 erros_principal_global, loc_principal_global = detectar_erros_principal(
-    "video_corrompido.y4m",
+    "video_corrompido_2.y4m",
     limiares_principal_global
 )
 
@@ -112,18 +113,18 @@ def correcao(frame_atual, frame_anterior, preview_atual, W, H):
     return frame_corr
 
 
-f_corr, header, W, H  = pegar_frames("video_corrompido.y4m")
-f_p_coor, _, _, _ = pegar_frames("reduzido_e_corrompido.y4m")
+f_corr, header, W, H  = pegar_frames("video_corrompido_2.y4m")
+f_p_coor, _, _, _ = pegar_frames("preview_corrompido.y4m")
 frames_corrigido = []
 tamanho = min(len(f_corr), len(f_p_coor))
 for i in range(tamanho):
     if i == 0:
         frames_corrigido.append(f_corr[i])
         continue
-    elif (erros_preview[i] or erros_preview_global[i]) and (erros_principal_global[i] or erros_principal[i]):
+    elif (erros_preview[i] or erros_preview_global[i]) or (erros_principal_global[i] or erros_principal[i]):
         f_corrigido = correcao(f_corr[i], f_corr[i-1], f_p_coor[i], W, H)
         frames_corrigido.append(f_corrigido)
-    elif (erros_principal_global[i] and erros_principal[i]):
+    elif (erros_principal_global[i] or erros_principal[i]):
         f_corrigido = correcao(f_corr[i], f_corr[i-1], f_p_coor[i], W, H)
         frames_corrigido.append(f_corrigido)
     else:

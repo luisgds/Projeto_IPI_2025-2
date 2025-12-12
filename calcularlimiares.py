@@ -135,7 +135,6 @@ def detectar_erros_principal(path_preview, limiares):
 
 
     return erros_frames, loc_erros_frames
-import random
 
 def corromper_y4m(
     input_path,
@@ -180,4 +179,85 @@ def corromper_y4m(
             out.write(frame)
 
     print("Arquivo salvo como:", output_path)
+import random
+import numpy as np
 
+
+def corromper_bloco_frame_yuv420(
+    frame: bytearray,
+    W: int,
+    H: int,
+    bx: int,
+    by: int,
+    block_size: int = 16,
+    modo: str = "invert"
+):
+    frame = bytearray(frame)
+
+    Y_size = W * H
+    Y = np.frombuffer(frame[0:Y_size], dtype=np.uint8).reshape((H, W))
+
+    x0 = bx * block_size
+    y0 = by * block_size
+
+    if x0 + block_size > W or y0 + block_size > H:
+        return frame
+
+    bloco = Y[y0:y0 + block_size, x0:x0 + block_size]
+
+    if modo == "invert":
+        bloco[:] = 255 - bloco
+    elif modo == "zero":
+        bloco[:] = 0
+    elif modo == "white":
+        bloco[:] = 255
+    else:
+        raise ValueError("Modo inválido")
+
+    frame[0:Y_size] = Y.tobytes()
+    return frame
+
+
+def corromper_y4m_2(
+    input_path,
+    output_path,
+    frames_para_corromper=30,
+    usar_blocos=True,
+    tamanho_bloco=16,
+    num_blocos_por_frame=2,
+):
+    with open(input_path, "rb") as f:
+        data = f.read()
+    partes = data.split(b"FRAME\n")
+    header = partes[0]
+    frames = [bytearray(f) for f in partes[1:]]
+    header_text = header.decode("ascii", errors="ignore")
+    W = int(header_text.split(" W")[1].split(" ")[0])
+    H = int(header_text.split(" H")[1].split(" ")[0])
+    frames_para_corromper = min(frames_para_corromper, len(frames))
+    indices_frames = random.sample(range(len(frames)), frames_para_corromper)
+    num_blocos_x = W // tamanho_bloco
+    num_blocos_y = H // tamanho_bloco
+
+    for idx in indices_frames:
+        frame = frames[idx]
+        if usar_blocos:
+            for _ in range(num_blocos_por_frame):
+                bx = random.randint(0, num_blocos_x - 1)
+                by = random.randint(0, num_blocos_y - 1)
+                frame = corromper_bloco_frame_yuv420(
+                    frame,
+                    W, H,
+                    bx, by,
+                    block_size=tamanho_bloco,
+                    modo="invert"
+                )
+
+        frames[idx] = frame
+    with open(output_path, "wb") as out:
+        out.write(header)
+        for frame in frames:
+            out.write(b"FRAME\n")
+            out.write(frame)
+
+    print("Arquivo salvo como:", output_path)
