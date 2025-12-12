@@ -13,6 +13,22 @@ def ler_frames(input_path):
     cap1.release()
     return frames
 
+def pegar_frames(input_path):
+    frames = []
+    with open(input_path, "rb") as f:
+        data = f.read()
+    partes = data.split(b"FRAME\n")
+    header = partes[0]
+    header_text = header.decode("ascii", errors="ignore")
+    W = int(header_text.split(" W")[1].split(" ")[0])
+    H = int(header_text.split(" H")[1].split(" ")[0])
+    frame_size = W * H + (W // 2) * (H // 2) * 2
+    for p in partes[1:]:
+        if len(p) < frame_size:
+            continue
+        frames.append(bytearray(p[:frame_size]))
+    return frames, header, W, H
+
 def mse(block1, block2):
     err = np.mean((block1.astype(np.float32) - block2.astype(np.float32))**2)
     return err
@@ -48,9 +64,8 @@ def calcula_limiares_vetor(orig_path, redu_path = None, mode = True):
         frames = ler_frames(orig_path)
         limiares = [0]
         for i in range(1, len(frames)):
-            # Converte frame BGR -> YUV
-            yuv1 = cv2.cvtColor(frames[i-1], cv2.COLOR_BGR2YUV) 
-            yuv2 = cv2.cvtColor(frames[i],   cv2.COLOR_BGR2YUV)
+            yuv1 = frames[i-1]
+            yuv2 = frames[i]
             f1 = yuv1[:, :, 0]
             f2 = yuv2[:, :, 0]  
             limiar = calcula_limiar(f1, f2)
@@ -63,8 +78,8 @@ def calcula_limiares_vetor(orig_path, redu_path = None, mode = True):
         limiares = []
         n = min(len(frames_orig), len(frames_corr))
         for i in range(n):
-            yuv1 = cv2.cvtColor(frames_orig[i], cv2.COLOR_BGR2YUV)
-            yuv2 = cv2.cvtColor(frames_corr[i], cv2.COLOR_BGR2YUV)
+            yuv1 = frames_orig[i]
+            yuv2 = frames_orig[i]
             f1 = yuv1[:, :, 0] 
             f2 = yuv2[:, :, 0]
             limiar = calcula_limiar(f1, f2, 4)
@@ -72,9 +87,8 @@ def calcula_limiares_vetor(orig_path, redu_path = None, mode = True):
         return limiares
     
 def detectar_erros_frame(frame_preview, frame_recon, limiar, block_size=16):
-    # converte para Y (luminância)
-    p = cv2.cvtColor(frame_preview, cv2.COLOR_BGR2YUV)[:, :, 0]
-    r = cv2.cvtColor(frame_recon,   cv2.COLOR_BGR2YUV)[:, :, 0]
+    p = frame_preview[:, :, 0]
+    r = frame_recon[:, :, 0]
 
     blocks_p = get_blocks(p, block_size)
     blocks_r = get_blocks(r, block_size)
@@ -121,25 +135,49 @@ def detectar_erros_principal(path_preview, limiares):
 
 
     return erros_frames, loc_erros_frames
+import random
 
-def corromper_y4m(input_path, output_path, bits_por_frame=10000):
+def corromper_y4m(
+    input_path,
+    output_path,
+    bits_por_frame=1000,
+    usar_blocos= False,
+    tamanho_bloco=16,
+    num_blocos_por_frame=3,
+    perder_frames=False,
+    prob_perder_frame=0.5
+):
     with open(input_path, "rb") as f:
         data = f.read()
+
     partes = data.split(b"FRAME\n")
     header = partes[0]
     frames = partes[1:]  
     print(f"Total de frames encontrados: {len(frames)}")
+
     frames = [bytearray(f) for f in frames]
     indices = random.sample(range(len(frames)), 60)
     for idx in indices:
         frame = frames[idx]
+        if perder_frames and random.random() < prob_perder_frame:
+            for i in range(len(frame)):
+                frame[i] = 0
+            continue 
         for _ in range(bits_por_frame):
             pos = random.randint(0, len(frame) - 1)
             bit = 1 << random.randint(0, 7)
-            frame[pos] ^= bit  # XOR troca o bit
+            frame[pos] ^= bit  # XOR flip bit
+        if usar_blocos:
+            frame_len = len(frame)
+            for _ in range(num_blocos_por_frame):
+                inicio = random.randint(0, max(0, frame_len - tamanho_bloco))
+                for i in range(tamanho_bloco):
+                    frame[inicio + i] ^= 0xFF  # invertendo todos os bits
     with open(output_path, "wb") as out:
         out.write(header)
         for frame in frames:
             out.write(b"FRAME\n")
             out.write(frame)
+
     print("Arquivo salvo como:", output_path)
+

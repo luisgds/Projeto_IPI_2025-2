@@ -6,6 +6,7 @@ cap = cv2.VideoCapture("akiyo_cif.y4m")
 #cap = cv2.VideoCapture("video_corrompido.y4m")
 #cap = cv2.VideoCapture("reduzido_e_corrompido.y4m")
 #cap = cv2.VideoCapture("preview_corrompido.y4m")
+cap = cv2.VideoCapture("video_corrigido.y4m")
 
 fps = 30
 delay = int(1000 / fps)
