@@ -123,6 +123,7 @@ for i in range(tamanho):
         continue
     elif (erros_preview[i] or erros_preview_global[i]) or (erros_principal_global[i] or erros_principal[i]):
         f_corrigido = correcao(f_corr[i], f_corr[i-1], f_p_coor[i], W, H)
+        
         frames_corrigido.append(f_corrigido)
     elif (erros_principal_global[i] or erros_principal[i]):
         f_corrigido = correcao(f_corr[i], f_corr[i-1], f_p_coor[i], W, H)

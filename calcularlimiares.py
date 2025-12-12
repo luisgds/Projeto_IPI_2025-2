@@ -48,7 +48,6 @@ def calcula_limiar(frame1, frame2, blocos = 16):
     blocks1 = get_blocks(frame1, blocos)
     blocks2 = get_blocks(frame2, blocos)
     for b1, b2 in zip(blocks1, blocks2):
-        # Caso tamanhos diferentes → redimensiona 0.25 igual ao livro
         if b1.shape != b2.shape:
             b1 = cv2.resize(b1, (b2.shape[1], b2.shape[0]))
         mse_atual = mse(b1, b2)
@@ -193,18 +192,13 @@ def corromper_bloco_frame_yuv420(
     modo: str = "invert"
 ):
     frame = bytearray(frame)
-
     Y_size = W * H
     Y = np.frombuffer(frame[0:Y_size], dtype=np.uint8).reshape((H, W))
-
     x0 = bx * block_size
     y0 = by * block_size
-
     if x0 + block_size > W or y0 + block_size > H:
         return frame
-
     bloco = Y[y0:y0 + block_size, x0:x0 + block_size]
-
     if modo == "invert":
         bloco[:] = 255 - bloco
     elif modo == "zero":
@@ -221,10 +215,10 @@ def corromper_bloco_frame_yuv420(
 def corromper_y4m_2(
     input_path,
     output_path,
-    frames_para_corromper=30,
+    frames_para_corromper=50,
     usar_blocos=True,
-    tamanho_bloco=16,
-    num_blocos_por_frame=2,
+    tamanho_bloco=32,
+    num_blocos_por_frame=10,
 ):
     with open(input_path, "rb") as f:
         data = f.read()
